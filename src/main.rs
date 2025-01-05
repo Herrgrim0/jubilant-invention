@@ -16,7 +16,6 @@ fn update(_app: &App, _model: &mut Model, _update: Update) {}
 
 fn view(app: &App, _model: &Model, frame: Frame) {
     let draw = app.draw();
-
     draw.background().color(BLACK);
 
     let start_x_coord = random_range(-300.0, 300.0);
@@ -28,12 +27,8 @@ fn view(app: &App, _model: &Model, frame: Frame) {
 
     let horizontal_or_vertical = random::<usize>() % 2;
     match horizontal_or_vertical {
-        0 => {
-            end_point = pt2(start_x_coord, start_y_coord + line_length);
-        }
-        1 => {
-            end_point = pt2(start_x_coord + line_length, start_y_coord);
-        }
+        0 => end_point = pt2(start_x_coord, start_y_coord + line_length),
+        1 => end_point = pt2(start_x_coord + line_length, start_y_coord),
         _ => {}
     }
 
