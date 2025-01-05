@@ -1,5 +1,4 @@
-/* Draw horizontal and vertical lines randomly
-*/
+/* Draw horizontal and vertical lines randomly*/
 use nannou::prelude::*;
 
 fn main() {
