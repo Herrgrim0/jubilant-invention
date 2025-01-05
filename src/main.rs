@@ -16,6 +16,7 @@ fn update(_app: &App, _model: &mut Model, _update: Update) {}
 
 fn view(app: &App, _model: &Model, frame: Frame) {
     let draw = app.draw();
+
     draw.background().color(BLACK);
 
     let start_x_coord = random_range(-300.0, 300.0);
