@@ -22,13 +22,14 @@ fn view(app: &App, _model: &Model, frame: Frame) {
     const NBR_OBJECTS: usize = 100;
     // list containing at n a starting point and at n+1 an ending point
     // to draw a line
-    let mut lst_obj: [Point2; NBR_OBJECTS * 2] = [pt2(0.0, 0.0); NBR_OBJECTS * 2];
+    let mut lst_obj: [(Point2, Point2); NBR_OBJECTS] =
+        [(pt2(0.0, 0.0), pt2(0.0, 0.0)); NBR_OBJECTS];
 
     draw.background().color(BLACK);
 
     // create a list of vertical or horizontal lines with random coordinates
     let mut i: usize = 0;
-    while i < NBR_OBJECTS * 2 {
+    while i < NBR_OBJECTS {
         let start_x_coord = random_range(-300.0, 300.0);
         let start_y_coord = random_range(-300.0, 300.0);
         let line_length = random_range(-300.0, 300.0);
@@ -43,18 +44,17 @@ fn view(app: &App, _model: &Model, frame: Frame) {
             _ => {}
         }
 
-        lst_obj[i] = start_point;
-        lst_obj[i + 1] = end_point;
-        i += 2;
+        lst_obj[i] = (start_point, end_point);
+        i += 1;
     }
 
     i = 0;
 
     // draw the list of lines
-    while i < NBR_OBJECTS * 2 {
+    while i < NBR_OBJECTS {
         draw.line()
-            .start(lst_obj[i])
-            .end(lst_obj[i + 1])
+            .start(lst_obj[i].0)
+            .end(lst_obj[i].1)
             .weight(WEIGHT)
             .color(WHITE);
         i += 2;
