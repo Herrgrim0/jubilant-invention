@@ -11,7 +11,6 @@ enum Direction {
     Down,
     Left,
     Right,
-    Rest,
 }
 
 fn main() {
@@ -24,6 +23,7 @@ struct Model {
     pub lines: [(Point2, Point2); NBR_OBJECTS],
     pub direction: Direction,
     pub counter: u8,
+    pub step: f32,
 }
 
 fn model(_app: &App) -> Model {
@@ -36,15 +36,26 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
         model.counter += 1;
     } else {
         match model.direction {
-            Direction::Up => model.direction = Direction::Down,
-            Direction::Down => model.direction = Direction::Left,
-            Direction::Left => model.direction = Direction::Right,
-            Direction::Right => model.direction = Direction::Up,
-            Direction::Rest => model.direction = Direction::Up,
+            Direction::Up => {
+                model.direction = Direction::Down;
+                model.step = -2.0
+            }
+            Direction::Down => {
+                model.direction = Direction::Left;
+                model.step = 2.0
+            }
+            Direction::Left => {
+                model.direction = Direction::Right;
+                model.step = -2.0
+            }
+            Direction::Right => {
+                model.direction = Direction::Up;
+                model.step = 2.0
+            }
         }
         model.counter = 0;
     }
-    thread::sleep(time::Duration::from_millis(10));
+    thread::sleep(time::Duration::from_millis(50));
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
@@ -80,9 +91,9 @@ fn generate_lines() -> [(Point2, Point2); NBR_OBJECTS] {
 
         let start_point = pt2(start_x_coord, start_y_coord);
         let end_point: Vec2 = if i < NBR_OBJECTS / 2 {
-            pt2(start_x_coord, start_y_coord + line_length)
+            pt2(start_x_coord, start_y_coord + line_length) // create vertical line
         } else {
-            pt2(start_x_coord + line_length, start_y_coord)
+            pt2(start_x_coord + line_length, start_y_coord) // create horizontal line
         };
         // TODO:check length of the line and put a low threshold
         *line = (start_point, end_point);
@@ -95,46 +106,28 @@ impl Model {
     fn new() -> Model {
         Model {
             lines: generate_lines(),
-            direction: Direction::Rest,
+            direction: Direction::Up,
             counter: 0,
+            step: 2.0,
         }
     }
 
-    fn move_lines_up(&mut self) {
-        for i in 0..NBR_OBJECTS {
-            self.lines[i].0.y += 2.0;
-            self.lines[i].1.y += 2.0;
+    fn move_lines_vertically(&mut self) {
+        for i in 0..NBR_OBJECTS / 2 {
+            self.lines[i].0.y += self.step;
+            self.lines[i].1.y += self.step;
         }
     }
 
-    fn move_lines_down(&mut self) {
-        for i in 0..NBR_OBJECTS {
-            self.lines[i].0.y -= 2.0;
-            self.lines[i].1.y -= 2.0;
-        }
-    }
-
-    fn move_lines_right(&mut self) {
-        for i in 0..NBR_OBJECTS {
-            self.lines[i].0.x += 2.0;
-            self.lines[i].1.x += 2.0;
-        }
-    }
-
-    fn move_lines_left(&mut self) {
-        for i in 0..NBR_OBJECTS {
-            self.lines[i].0.x -= 2.0;
-            self.lines[i].1.x -= 2.0;
+    fn move_lines_horizontally(&mut self) {
+        for i in NBR_OBJECTS / 2..NBR_OBJECTS {
+            self.lines[i].0.x += self.step;
+            self.lines[i].1.x += self.step;
         }
     }
 
     fn move_lines(&mut self) {
-        match self.direction {
-            Direction::Up => self.move_lines_up(),
-            Direction::Down => self.move_lines_down(),
-            Direction::Left => self.move_lines_left(),
-            Direction::Right => self.move_lines_right(),
-            _ => {}
-        }
+        self.move_lines_vertically();
+        self.move_lines_horizontally();
     }
 }
