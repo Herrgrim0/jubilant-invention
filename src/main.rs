@@ -20,22 +20,11 @@ fn model(_app: &App) -> Model {
     Model::new()
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
-    for i in 0..NBR_OBJECTS / 2 {
-        if f32::max(model.lines[i].0.y, model.lines[i].1.y) >= 500.0
-            || f32::min(model.lines[i].0.y, model.lines[i].1.y) <= -500.0
-        {
-            model.lines[i].2 = -model.lines[i].2;
-        }
+fn update(app: &App, model: &mut Model, _update: Update) {
+    for line in model.lines.iter_mut() {
+        update_direction(app, line);
     }
 
-    for i in NBR_OBJECTS / 2..NBR_OBJECTS {
-        if f32::max(model.lines[i].0.x, model.lines[i].1.x) >= 500.0
-            || f32::min(model.lines[i].1.x, model.lines[i].0.x) <= -500.0
-        {
-            model.lines[i].2 = -model.lines[i].2;
-        }
-    }
     model.move_lines();
     thread::sleep(time::Duration::from_millis(50));
 }
@@ -68,13 +57,9 @@ fn generate_lines() -> [(Point2, Point2, f32); NBR_OBJECTS] {
         [(pt2(0.0, 0.0), pt2(0.0, 0.0), 0.0); NBR_OBJECTS];
 
     for (i, line) in lines.iter_mut().enumerate() {
-        let start_x_coord = random_range(-299.0, 299.0);
+        let start_x_coord = random_range(-499.0, 499.0);
         let start_y_coord = random_range(-299.0, 299.0);
-        let line_length = match random::<u8>() % 2 {
-            0 => random_range(30.0, 250.0),
-            1 => random_range(-250.0, -30.0),
-            _ => 50.0,
-        };
+        let line_length = 200.0;
 
         let start_point = pt2(start_x_coord, start_y_coord);
         let end_point: Vec2 = if i < NBR_OBJECTS / 2 {
@@ -82,11 +67,23 @@ fn generate_lines() -> [(Point2, Point2, f32); NBR_OBJECTS] {
         } else {
             pt2(start_x_coord + line_length % 300.0, start_y_coord) // create horizontal line
         };
-        // TODO:check length of the line and put a low threshold
-        *line = (start_point, end_point, random_range(-4.0, 4.0));
+
+        if start_point.cmpge(end_point) == BVec2::new(true, true) {
+            *line = (start_point, end_point, random_range(-4.0, 4.0));
+        }
+
+        *line = (end_point, start_point, random_range(-4.0, 4.0));
     }
 
     lines
+}
+
+fn update_direction(app: &App, line: &mut (Vec2, Vec2, f32)) {
+    if line.0.x >= app.window_rect().right() || line.0.y >= app.window_rect().top() {
+        line.2 = -line.2.abs();
+    } else if line.1.x <= app.window_rect().left() || line.1.y <= app.window_rect().bottom() {
+        line.2 = line.2.abs();
+    }
 }
 
 impl Model {
