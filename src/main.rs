@@ -1,10 +1,15 @@
 /* Draw horizontal and vertical lines randomly*/
 use nannou::prelude::*;
-use std::{thread, time};
+use std::{env, thread, time};
 
 const WEIGHT: f32 = 4.0;
-const NBR_OBJECTS: usize = 100;
-//const COUNTER_TRESHOLD: u8 = 50;
+const NBR_OBJECTS: usize = 200;
+const MAX_STEP: usize = 50;
+
+enum Feature {
+    Move,
+    Extend,
+}
 
 fn main() {
     nannou::app(model).update(update).simple_window(view).run();
@@ -13,19 +18,43 @@ fn main() {
 struct Model {
     // list containing at n a starting point and at n+1 an ending point
     // to draw a line
+    feat: Feature,
     pub lines: [(Point2, Point2, f32); NBR_OBJECTS],
+    step: usize,
 }
 
 fn model(_app: &App) -> Model {
-    Model::new()
+    let args: Vec<String> = env::args().collect();
+    let feat = match args[1].as_str() {
+        "move" => Feature::Move,
+        "extend" => Feature::Extend,
+        _ => panic!(
+            "argument didn't match!\nUse move for moving lines.\nUse extend for extending lines."
+        ),
+    };
+    Model::new(feat)
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
-    for line in model.lines.iter_mut() {
-        update_direction(app, line);
+    match model.feat {
+        Feature::Move => {
+            for line in model.lines.iter_mut() {
+                update_direction(app, line);
+            }
+            model.move_lines();
+        }
+        Feature::Extend => {
+            model.extend_line();
+            model.step += 1;
+            if model.step > MAX_STEP {
+                model.step = 0;
+                for line in model.lines.iter_mut() {
+                    line.2 = -line.2;
+                }
+            }
+        }
     }
 
-    model.move_lines();
     thread::sleep(time::Duration::from_millis(50));
 }
 
@@ -58,7 +87,7 @@ fn generate_lines() -> [(Point2, Point2, f32); NBR_OBJECTS] {
 
     for (i, line) in lines.iter_mut().enumerate() {
         let start_x_coord = random_range(-499.0, 499.0);
-        let start_y_coord = random_range(-299.0, 299.0);
+        let start_y_coord = random_range(-399.0, 399.0);
         let line_length = 200.0;
 
         let start_point = pt2(start_x_coord, start_y_coord);
@@ -87,9 +116,11 @@ fn update_direction(app: &App, line: &mut (Vec2, Vec2, f32)) {
 }
 
 impl Model {
-    fn new() -> Model {
+    fn new(feat: Feature) -> Model {
         Model {
+            feat,
             lines: generate_lines(),
+            step: 0,
         }
     }
 
@@ -107,8 +138,46 @@ impl Model {
         }
     }
 
+    fn extend_line(&mut self) {
+        for line in self.lines.iter_mut() {
+            if is_vertical(line) {
+                // if the line is vertical
+                if line.0.y < 0.0 {
+                    line.0.y += line.2;
+                } else {
+                    line.0.y -= line.2;
+                }
+                if line.1.y < 0.0 {
+                    line.1.y -= line.2;
+                } else {
+                    line.1.y += line.2;
+                }
+            } else if is_horizontal(line) {
+                // line is horizontal
+                if line.0.x < 0.0 {
+                    line.0.x += line.2;
+                } else {
+                    line.0.x -= line.2;
+                }
+                if line.1.x < 0.0 {
+                    line.1.x -= line.2;
+                } else {
+                    line.1.x += line.2;
+                }
+            }
+        }
+    }
+
     fn move_lines(&mut self) {
         self.move_lines_vertically();
         self.move_lines_horizontally();
     }
+}
+
+fn is_vertical(line: &mut (Vec2, Vec2, f32)) -> bool {
+    line.0.x == line.1.x
+}
+
+fn is_horizontal(line: &mut (Vec2, Vec2, f32)) -> bool {
+    line.0.y == line.1.y
 }
